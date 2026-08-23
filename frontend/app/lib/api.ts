@@ -35,11 +35,27 @@ export async function fetchProducts(category?: string, search?: string): Promise
     const res = await fetch(`${API_BASE}/products?${params.toString()}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch products");
     const data = await res.json();
-    return Array.isArray(data) ? data : (data.items || []);
+    const list = Array.isArray(data) ? data : (data.items || []);
+
+    return list.map((item: any) => {
+      const imgUrl = item.image_url || item.image || (item.images && item.images[0]) || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop";
+      const secImgUrl = item.secondaryImage || (item.images && item.images[1]) || imgUrl;
+      return {
+        ...item,
+        price: Number(item.price),
+        image: imgUrl,
+        image_url: imgUrl,
+        secondaryImage: secImgUrl,
+        tag: item.tag || (item.is_featured ? "Signature" : (item.is_new_arrival ? "New" : "Luxury")),
+        rating: item.rating || 5.0,
+        reviews: item.reviews || 24,
+      };
+    });
   } catch {
     return getFallbackProducts(category, search);
   }
 }
+
 
 export async function fetchCategories(): Promise<{ id: number; name: string; slug: string }[]> {
   try {

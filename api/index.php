@@ -145,7 +145,8 @@ if (preg_match('#^/api/products(?:/([a-zA-Z0-9_-]+))?$#', $uri, $matches)) {
                 $p['images'] = $img ? [$img['url']] : [];
             }
 
-            echo json_encode($products);
+            echo json_encode($products, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
             exit;
         }
     }
