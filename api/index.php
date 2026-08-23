@@ -74,13 +74,14 @@ if ($uri === '/api/upload') {
             exit;
         }
 
-        $ext = match ($mime) {
+        $mimeToExt = [
             'image/jpeg' => 'jpg',
             'image/png'  => 'png',
             'image/webp' => 'webp',
             'image/gif'  => 'gif',
-            default      => 'jpg',
-        };
+        ];
+        $ext = isset($mimeToExt[$mime]) ? $mimeToExt[$mime] : 'jpg';
+
 
         $filename = 'senka-' . uniqid() . '.' . $ext;
         $dest = $uploadDir . $filename;
