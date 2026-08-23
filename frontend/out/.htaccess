@@ -1,4 +1,6 @@
-# Senka Luxury Atelier — DirectoryIndex & Clean URL Rewrite Rules
+# Senka Luxury Atelier — Clean URL & CDN Reverse Proxy Rewrite Rules
+# Disable Apache DirectorySlash 301 redirect loop behind CDN proxies (StackCDN / Cloudflare)
+DirectorySlash Off
 DirectoryIndex index.html index.php
 
 <IfModule mod_headers.c>
@@ -9,16 +11,18 @@ DirectoryIndex index.html index.php
 RewriteEngine On
 RewriteBase /
 
-# 1. Direct files or directories pass through directly
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
+# 1. Direct files pass through directly
+RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
-# 2. Map clean URLs to .html files (e.g. /admin -> admin.html, /checkout -> checkout.html)
-RewriteCond %{REQUEST_FILENAME}.html -f
-RewriteRule ^(.*)$ $1.html [L]
+# 2. Map root / to index.html directly
+RewriteRule ^$ index.html [L]
 
-# 3. Fallback to index.html for client-side router
-RewriteCond %{REQUEST_URI} !^/index\.html$
-RewriteCond %{REQUEST_URI} !^/index$
+# 3. Map clean URLs to .html files (e.g. /admin -> admin.html, /checkout -> checkout.html)
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^([^/]+)/?$ $1.html [L]
+
+# 4. Fallback to index.html for client-side router
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.html [L]
