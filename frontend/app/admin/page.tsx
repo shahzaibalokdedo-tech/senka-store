@@ -13,7 +13,8 @@ import ImageUploader from "../components/ImageUploader";
 import { isAdmin } from "../lib/auth";
 import Link from "next/link";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://senkafashion.com/api";
+
 
 // ────────────────────────────────
 // Types
@@ -118,21 +119,22 @@ export default function AdminPage() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [pList, oList, catRes, custRes, settRes] = await Promise.all([
+      const [pList, oList, catRaw, custRaw, settRaw] = await Promise.all([
         fetchProducts(),
         fetchOrders(),
-        fetch(`${API}/admin/categories`).then((r) => r.json()).catch(() => ({ categories: [] })),
-        fetch(`${API}/admin/customers`).then((r) => r.json()).catch(() => ({ customers: [] })),
-        fetch(`${API}/admin/settings`).then((r) => r.json()).catch(() => ({ settings: [] })),
+        fetch(`${API}/categories`).then((r) => r.json()).catch(() => []),
+        fetch(`${API}/admin/customers`).then((r) => r.json()).catch(() => []),
+        fetch(`${API}/admin/settings`).then((r) => r.json()).catch(() => []),
       ]);
       setProducts(pList);
-      setOrders(oList);
-      setCategories(catRes.categories || []);
-      setCustomers(custRes.customers || []);
-      setSettings(settRes.settings || []);
+      setOrders(Array.isArray(oList) ? oList : (oList.orders || []));
+      setCategories(Array.isArray(catRaw) ? catRaw : (catRaw.categories || []));
+      setCustomers(Array.isArray(custRaw) ? custRaw : (custRaw.customers || []));
+      setSettings(Array.isArray(settRaw) ? settRaw : (settRaw.settings || []));
     } catch (e) { console.error(e); }
     setLoading(false);
   };
+
 
   // ── Update site setting
   const updateSetting = async (key: string, value: string) => {

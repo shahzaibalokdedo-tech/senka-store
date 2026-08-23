@@ -11,7 +11,8 @@ const TOKEN_KEY = "senka_auth_token";
 const USER_KEY = "senka_auth_user";
 const TIME_KEY = "senka_auth_time";
 
-const SESSION_TTL_MS = 60 * 60 * 1000; // 1 Hour TTL
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 Hour TTL
+
 
 export function setSession(token: string, user: AuthUser) {
   if (typeof window !== "undefined") {
