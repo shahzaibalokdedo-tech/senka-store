@@ -1,19 +1,17 @@
-# Senka Luxury Atelier — Clean URL Rewrite Rules for Apache (20i / StackCP Compatible)
+# Senka Luxury Atelier — Clean URL Rewrite Rules for Apache
 RewriteEngine On
 RewriteBase /
 
-# If requested file or directory exists physically, serve it
+# 1. Direct files or directories pass through directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Serve .html files for clean URLs (e.g. /admin -> /admin.html)
-RewriteCond %{DOCUMENT_ROOT}/$1.html -f
-RewriteRule ^([^/]+)/?$ $1.html [L]
+# 2. Map clean URLs to .html files (e.g. /admin -> admin.html, /checkout -> checkout.html)
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
 
-# Serve nested .html files (e.g. /products/ring -> /products/ring.html)
-RewriteCond %{DOCUMENT_ROOT}/$1/$2.html -f
-RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2.html [L]
-
-# Fallback to index.html for client-side router
-RewriteRule ^ index.html [L]
+# 3. Fallback to index.html only if request is not an actual file
+RewriteCond %{REQUEST_URI} !^/index\.html$
+RewriteCond %{REQUEST_URI} !^/index$
+RewriteRule ^(.*)$ index.html [L]
