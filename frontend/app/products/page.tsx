@@ -115,10 +115,18 @@ export default function ProductsPage() {
       if (existing) {
         return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price: Number(product.price || 0),
+        quantity: 1,
+        image: product.image || product.image_url,
+        metal: product.metal_type || product.metal || "18K Gold Atelier"
+      }];
     });
     setCartOpen(true);
   };
+
 
   const handleToggleWishlist = (product: any) => {
     setWishlistItems((prev) => {

@@ -153,13 +153,14 @@ export default function QuickViewModal({
             {/* Pricing */}
             <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "18px" }}>
               <span style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--gold-light)" }}>
-                PKR {product.price.toLocaleString()}
+                PKR {Number(product.price || 0).toLocaleString()}
               </span>
               {product.comparePrice && (
                 <span style={{ fontSize: "1.05rem", color: "var(--text-dim)", textDecoration: "line-through" }}>
-                  PKR {product.comparePrice.toLocaleString()}
+                  PKR {Number(product.comparePrice || 0).toLocaleString()}
                 </span>
               )}
+
             </div>
 
 

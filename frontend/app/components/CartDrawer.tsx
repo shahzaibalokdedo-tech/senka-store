@@ -139,16 +139,20 @@ export default function CartDrawer({
                     width: "72px",
                     height: "72px",
                     borderRadius: "var(--radius-sm)",
-                    background: "radial-gradient(circle, rgba(226,192,116,0.2) 0%, rgba(14,14,19,0.9) 100%)",
+                    background: item.image
+                      ? `url(${item.image}) center/cover no-repeat`
+                      : "radial-gradient(circle, rgba(226,192,116,0.2) 0%, rgba(14,14,19,0.9) 100%)",
                     border: "1px solid rgba(226,192,116,0.2)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <span className="font-serif gold-gradient-text" style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-                    S
-                  </span>
+                  {!item.image && (
+                    <span className="font-serif gold-gradient-text" style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                      S
+                    </span>
+                  )}
                 </div>
 
                 {/* Details */}
