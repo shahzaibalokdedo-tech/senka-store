@@ -4,23 +4,38 @@ require_once __DIR__ . '/config.php';
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         ];
-        try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-            initDB($pdo);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => "Database Connection Failed: " . $e->getMessage()]);
-            exit;
+
+        $dsns = [
+            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=localhost;unix_socket=/tmp/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=localhost;unix_socket=/var/lib/mysql/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=localhost;unix_socket=/var/run/mysqld/mysqld.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=127.0.0.1;port=3306;dbname=" . DB_NAME . ";charset=utf8mb4"
+        ];
+
+        $lastException = null;
+        foreach ($dsns as $dsn) {
+            try {
+                $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+                initDB($pdo);
+                return $pdo;
+            } catch (PDOException $e) {
+                $lastException = $e;
+            }
         }
+
+        http_response_code(500);
+        echo json_encode(["error" => "Database Connection Failed: " . $lastException->getMessage()]);
+        exit;
     }
     return $pdo;
 }
+
 
 function initDB($pdo) {
     // Create Categories Table
