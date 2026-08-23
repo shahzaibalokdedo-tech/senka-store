@@ -2,9 +2,10 @@
 // Senka API Configuration
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'senkafashion_db'); // Replace with your MySQL DB name on hosting
-define('DB_USER', 'senkafashion_user'); // Replace with your MySQL DB username
-define('DB_PASS', 'YOUR_DB_PASSWORD');  // Replace with your MySQL DB password
+define('DB_NAME', 'senkafashion_db');
+define('DB_USER', 'senkafashion_user');
+define('DB_PASS', 'SenkaDb#2026!');
+
 
 define('JWT_SECRET', 'senka-super-secret-jwt-2024');
 
