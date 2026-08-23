@@ -6,7 +6,8 @@ import { Lock, Mail, User, Phone, Sparkles, ArrowRight, CheckCircle, AlertCircle
 import Link from "next/link";
 import { setSession } from "../lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://senkafashion.com/api";
+
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");

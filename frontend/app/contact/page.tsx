@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import { Mail, Phone, MapPin, Clock, Send, Globe, Share2, MessageCircle, Sparkles } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://senkafashion.com/api";
+
 
 export default function ContactPage() {
   const [name, setName] = useState("");
