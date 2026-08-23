@@ -132,10 +132,21 @@ if ($uri === '/api/categories') {
     }
 }
 
+if (preg_match('#^/api/(?:admin/)?categories/([0-9]+)$#', $uri, $matches)) {
+    if ($method === 'DELETE') {
+        $catId = intval($matches[1]);
+        $pdo->prepare("DELETE FROM categories WHERE id = ?")->execute([$catId]);
+        echo json_encode(["message" => "Category deleted successfully"]);
+        exit;
+    }
+}
+
+
 // ─────────────────────────────────────────────
 // 3. PRODUCTS (GET List/Single, POST, PUT, DELETE)
 // ─────────────────────────────────────────────
-if (preg_match('#^/api/products(?:/([a-zA-Z0-9_-]+))?$#', $uri, $matches)) {
+if (preg_match('#^/api/(?:admin/)?products(?:/([a-zA-Z0-9_-]+))?$#', $uri, $matches)) {
+
     $param = isset($matches[1]) ? $matches[1] : null;
 
     if ($method === 'GET') {
@@ -456,6 +467,15 @@ if (preg_match('#^/api/admin/orders/([0-9]+)/status$#', $uri, $matches)) {
         exit;
     }
 }
+
+if ($uri === '/api/admin/customers') {
+    if ($method === 'GET') {
+        $stmt = $pdo->query("SELECT id, email, first_name, last_name, phone, role, created_at FROM users ORDER BY created_at DESC");
+        echo json_encode($stmt->fetchAll());
+        exit;
+    }
+}
+
 
 if ($uri === '/api/admin/email/send') {
     if ($method === 'POST') {
