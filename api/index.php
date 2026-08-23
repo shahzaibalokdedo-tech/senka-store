@@ -326,9 +326,50 @@ function sendOrderEmail($toEmail, $toName, $orderNumber, $totalAmount, $shipping
     </html>
     ";
 
+    // Try Direct Socket SMTP to Gmail
+    try {
+        $socket = @fsockopen("tls://" . SMTP_HOST, 465, $errno, $errstr, 8);
+        if (!$socket) {
+            $socket = @fsockopen(SMTP_HOST, SMTP_PORT, $errno, $errstr, 8);
+        }
+        if ($socket) {
+            fgets($socket, 512);
+            fputs($socket, "EHLO " . SMTP_HOST . "\r\n");
+            fgets($socket, 512);
+            fputs($socket, "AUTH LOGIN\r\n");
+            fgets($socket, 512);
+            fputs($socket, base64_encode(SMTP_EMAIL) . "\r\n");
+            fgets($socket, 512);
+            fputs($socket, base64_encode(str_replace(' ', '', SMTP_PASSWORD)) . "\r\n");
+            fgets($socket, 512);
+            fputs($socket, "MAIL FROM: <" . SMTP_EMAIL . ">\r\n");
+            fgets($socket, 512);
+            fputs($socket, "RCPT TO: <" . $toEmail . ">\r\n");
+            fgets($socket, 512);
+            fputs($socket, "DATA\r\n");
+            fgets($socket, 512);
+
+            $msg = "Subject: $subject\r\n";
+            $msg .= "To: $toEmail\r\n";
+            $msg .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
+            $msg .= "MIME-Version: 1.0\r\n";
+            $msg .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+            $msg .= $body;
+
+            fputs($socket, $msg . "\r\n.\r\n");
+            fgets($socket, 512);
+            fputs($socket, "QUIT\r\n");
+            fclose($socket);
+            return;
+        }
+    } catch (Exception $e) {
+        // Fallback to native mail()
+    }
+
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
     $headers .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
 
-    @mail($toEmail, $subject, $body, $headers);
+    @mail($toEmail, $subject, $body, $headers, "-f" . SMTP_EMAIL);
 }
+

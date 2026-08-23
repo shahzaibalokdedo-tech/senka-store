@@ -5,8 +5,3 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
-
-<LimitExcept GET POST PUT DELETE OPTIONS>
-    Require all granted
-</LimitExcept>
-
