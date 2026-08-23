@@ -1,6 +1,11 @@
 # Senka Luxury Atelier — DirectoryIndex & Clean URL Rewrite Rules
 DirectoryIndex index.html index.php
 
+<IfModule mod_headers.c>
+    # Prevent StackCDN edge servers from caching redirects or stale HTML
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+</IfModule>
+
 RewriteEngine On
 RewriteBase /
 
