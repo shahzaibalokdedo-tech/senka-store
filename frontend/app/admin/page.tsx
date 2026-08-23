@@ -473,44 +473,56 @@ export default function AdminPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem" }}>
               <thead>
                 <tr style={{ background: "rgba(7,7,9,0.8)", borderBottom: "1px solid var(--gold-line)" }}>
-                  {["Order Ref","Date","Payment","Total (PKR)","Status","Update"].map((h) => (
+                  {["Order Ref","Customer","Date","Payment","Total (PKR)","Status","Update"].map((h) => (
                     <th key={h} style={{ padding: "14px 16px", color: "var(--gold-primary)", textAlign: "left", fontSize: "0.75rem", textTransform: "uppercase" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
-                  <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "var(--text-dim)" }}>No orders yet. They appear here when customers check out.</td></tr>
-                ) : orders.map((o) => (
-                  <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding: "14px 16px", color: "var(--gold-light)", fontWeight: 700 }}>{o.order_number}</td>
-                    <td style={{ padding: "14px 16px", color: "var(--text-dim)", fontSize: "0.8rem" }}>{o.created_at ? new Date(o.created_at).toLocaleDateString("en-PK") : "—"}</td>
-                    <td style={{ padding: "14px 16px", color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.8rem" }}>{o.payment_provider || "COD"}</td>
-                    <td style={{ padding: "14px 16px", color: "var(--gold-light)", fontWeight: 600 }}>PKR {o.total.toLocaleString()}</td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <span style={{ fontSize: "0.75rem", padding: "3px 10px", borderRadius: "20px", background: o.status === "delivered" ? "rgba(16,185,129,0.15)" : "rgba(226,192,116,0.12)", color: o.status === "delivered" ? "var(--emerald)" : "var(--gold-light)", border: `1px solid ${o.status === "delivered" ? "var(--emerald)" : "var(--gold-line)"}`, textTransform: "capitalize" }}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <select
-                        defaultValue={o.status}
-                        onChange={async (e) => {
-                          await fetch(`${API}/orders/${o.id}/status?status=${e.target.value}`, { method: "PATCH" }).catch(() => {});
-                          setOrders((prev) => prev.map((ord) => ord.id === o.id ? { ...ord, status: e.target.value } : ord));
-                          showToast(`✓ Order ${o.order_number} → ${e.target.value}`);
-                        }}
-                        style={{ background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "6px", padding: "4px 8px", color: "var(--text-main)", fontSize: "0.78rem" }}
-                      >
-                        {["pending","processing","dispatched","delivered","cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
+                  <tr><td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "var(--text-dim)" }}>No orders yet. They appear here when customers check out.</td></tr>
+                ) : orders.map((o) => {
+                  const status = o.order_status || o.status || "processing";
+                  const totalAmt = Number(o.total_amount || o.total || 0);
+                  const custName = o.customer_name || `${o.first_name || ''} ${o.last_name || ''}`.trim() || "Customer";
+                  return (
+                    <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding: "14px 16px", color: "var(--gold-light)", fontWeight: 700 }}>{o.order_number}</td>
+                      <td style={{ padding: "14px 16px", color: "var(--text-main)", fontSize: "0.82rem" }}>{custName}</td>
+                      <td style={{ padding: "14px 16px", color: "var(--text-dim)", fontSize: "0.8rem" }}>{o.created_at ? new Date(o.created_at).toLocaleDateString("en-PK") : "—"}</td>
+                      <td style={{ padding: "14px 16px", color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.8rem" }}>{o.payment_method || o.payment_provider || "COD"}</td>
+                      <td style={{ padding: "14px 16px", color: "var(--gold-light)", fontWeight: 600 }}>PKR {totalAmt.toLocaleString()}</td>
+                      <td style={{ padding: "14px 16px" }}>
+                        <span style={{ fontSize: "0.75rem", padding: "3px 10px", borderRadius: "20px", background: status === "delivered" ? "rgba(16,185,129,0.15)" : "rgba(226,192,116,0.12)", color: status === "delivered" ? "var(--emerald)" : "var(--gold-light)", border: `1px solid ${status === "delivered" ? "var(--emerald)" : "var(--gold-line)"}`, textTransform: "capitalize" }}>
+                          {status}
+                        </span>
+                      </td>
+                      <td style={{ padding: "14px 16px" }}>
+                        <select
+                          value={status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            await fetch(`${API}/admin/orders/${o.id}/status`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ order_status: newStatus })
+                            }).catch(() => {});
+                            setOrders((prev) => prev.map((ord) => ord.id === o.id ? { ...ord, order_status: newStatus, status: newStatus } : ord));
+                            showToast(`✓ Order ${o.order_number} → ${newStatus}`);
+                          }}
+                          style={{ background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "6px", padding: "4px 8px", color: "var(--text-main)", fontSize: "0.78rem" }}
+                        >
+                          {["pending","processing","dispatched","delivered","cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
+
 
         {/* ─────────── SITE SETTINGS TAB ─────────── */}
         {activeTab === "settings" && (
