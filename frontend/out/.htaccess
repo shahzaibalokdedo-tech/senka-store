@@ -1,0 +1,23 @@
+# Senka Luxury Atelier — Clean URL Rewrite Rules for Apache
+RewriteEngine On
+RewriteBase /
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# If requested file or directory exists physically, serve it
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Serve .html files for clean URLs (e.g. /admin -> /admin.html)
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^([^/]+)/?$ $1.html [L]
+
+# Serve nested .html files (e.g. /products/ring -> /products/ring.html)
+RewriteCond %{DOCUMENT_ROOT}/$1/$2.html -f
+RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2.html [L]
+
+# Fallback to index.html for client-side router
+RewriteRule ^ index.html [L]
