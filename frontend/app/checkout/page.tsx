@@ -101,14 +101,19 @@ export default function CheckoutPage() {
 
     const orderPayload = {
       items: sampleCart.map((i) => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price, name: i.name })),
+      customer_name: `${firstName || "Customer"} ${lastName || ""}`.trim(),
+      customer_email: email || undefined,
+      customer_phone: phone || "03320409268",
+      shipping_address: address || "G9 Markaz",
       first_name: firstName || "Customer",
-      last_name: lastName || "Senka",
+      last_name: lastName || "",
       email: email || undefined,
       phone: phone || "03320409268",
       address: address || "G9 Markaz",
       city: city || "Islamabad",
       payment_method: paymentMethod,
     };
+
 
     const res = await createOrder(orderPayload);
     setIsSubmitting(false);
