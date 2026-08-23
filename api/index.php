@@ -75,12 +75,50 @@ if (preg_match('#^/api/products(?:/([a-zA-Z0-9_-]+))?$#', $uri, $matches)) {
             echo json_encode($product);
             exit;
         } else {
-            // Get all products
-            $stmt = $pdo->query("SELECT p.*, c.name as category_name, c.slug as category_slug 
-                                 FROM products p 
-                                 LEFT JOIN categories c ON p.category_id = c.id 
-                                 WHERE p.is_active = 1 ORDER BY p.id DESC");
+            // Get products with search, category, and metal filters
+            $where = ["p.is_active = 1"];
+            $params = [];
+
+            // Search filter
+            if (!empty($_GET['search'])) {
+                $searchTerm = '%' . trim($_GET['search']) . '%';
+                $where[] = "(p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ? OR c.name LIKE ?)";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+            }
+
+            // Category filter
+            if (!empty($_GET['category'])) {
+                $where[] = "(c.slug = ? OR c.name = ?)";
+                $params[] = trim($_GET['category']);
+                $params[] = trim($_GET['category']);
+            }
+
+            // Metal filter
+            if (!empty($_GET['metal'])) {
+                $where[] = "p.metal_type = ?";
+                $params[] = trim($_GET['metal']);
+            }
+
+            // Sorting
+            $orderBy = "ORDER BY p.id DESC";
+            if (isset($_GET['sort'])) {
+                if ($_GET['sort'] === 'price_asc') $orderBy = "ORDER BY p.price ASC";
+                if ($_GET['sort'] === 'price_desc') $orderBy = "ORDER BY p.price DESC";
+                if ($_GET['sort'] === 'newest') $orderBy = "ORDER BY p.id DESC";
+            }
+
+            $sql = "SELECT p.*, c.name as category_name, c.slug as category_slug 
+                    FROM products p 
+                    LEFT JOIN categories c ON p.category_id = c.id 
+                    WHERE " . implode(" AND ", $where) . " " . $orderBy;
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $products = $stmt->fetchAll();
+
 
             foreach ($products as &$p) {
                 $imgStmt = $pdo->prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC LIMIT 1");
