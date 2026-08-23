@@ -484,105 +484,145 @@ echo json_encode(["detail" => "Endpoint not found: " . $uri]);
 
 
 // ─────────────────────────────────────────────
-// EMAIL SENDING FUNCTION (Gmail SMTP)
+// SMTP HELPER: reads all response lines until final line (no dash after code)
+// ─────────────────────────────────────────────
+function smtpRead($socket) {
+    $response = '';
+    while ($line = fgets($socket, 512)) {
+        $response .= $line;
+        // Final line: "250 OK" — code + space (not code + dash)
+        if (isset($line[3]) && $line[3] === ' ') break;
+    }
+    return $response;
+}
+
+// ─────────────────────────────────────────────
+// EMAIL SENDING FUNCTION (Gmail SMTP TLS/SSL)
 // ─────────────────────────────────────────────
 function sendOrderEmail($toEmail, $toName, $orderNumber, $totalAmount, $shippingFee, $items) {
-    if (!SMTP_ENABLED || empty($toEmail)) return;
+    if (!SMTP_ENABLED || empty($toEmail)) return false;
 
-    $subject = "Senka Atelier — Order Confirmation ($orderNumber)";
-    
+    $subject  = "=?UTF-8?B?" . base64_encode("Senka Atelier — Order Confirmation ($orderNumber)") . "?=";
+    $smtpPass = str_replace(' ', '', SMTP_PASSWORD); // Remove spaces from app password
+
     $itemRows = "";
     foreach ($items as $item) {
         $itemRows .= "<tr>
-            <td style='padding: 10px; border-bottom: 1px solid #eee;'>" . htmlspecialchars($item['name'] ?? 'Jewelry Item') . "</td>
-            <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>" . intval($item['quantity'] ?? 1) . "</td>
-            <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>PKR " . number_format($item['unit_price'] ?? 0) . "</td>
+            <td style='padding:10px;border-bottom:1px solid #eee;'>" . htmlspecialchars($item['name'] ?? 'Jewelry Item') . "</td>
+            <td style='padding:10px;border-bottom:1px solid #eee;text-align:center;'>" . intval($item['quantity'] ?? 1) . "</td>
+            <td style='padding:10px;border-bottom:1px solid #eee;text-align:right;'>PKR " . number_format($item['unit_price'] ?? 0) . "</td>
         </tr>";
     }
 
-    $body = "
-    <html>
-    <body style='font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px;'>
-        <div style='max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #d4af37; border-radius: 8px; padding: 30px;'>
-            <div style='text-align: center; border-bottom: 2px solid #d4af37; padding-bottom: 15px;'>
-                <h1 style='color: #d4af37; letter-spacing: 4px; font-size: 26px; margin: 0;'>SENKA ATELIER</h1>
-                <p style='color: #888; text-transform: uppercase; font-size: 11px; margin-top: 5px;'>High Fine Jewelry & Craftsmanship</p>
+    $htmlBody = "
+    <html><body style='font-family:Arial,sans-serif;color:#333;background:#f9f9f9;padding:20px;'>
+        <div style='max-width:600px;margin:0 auto;background:#fff;border:1px solid #d4af37;border-radius:8px;padding:30px;'>
+            <div style='text-align:center;border-bottom:2px solid #d4af37;padding-bottom:15px;'>
+                <h1 style='color:#d4af37;letter-spacing:4px;font-size:26px;margin:0;'>SENKA ATELIER</h1>
+                <p style='color:#888;text-transform:uppercase;font-size:11px;margin-top:5px;'>High Fine Jewelry &amp; Craftsmanship</p>
             </div>
-            
-            <p style='font-size: 16px; margin-top: 25px;'>Dear <strong>" . htmlspecialchars($toName) . "</strong>,</p>
+            <p style='font-size:16px;margin-top:25px;'>Dear <strong>" . htmlspecialchars($toName) . "</strong>,</p>
             <p>Thank you for choosing Senka Atelier. Your order <strong>$orderNumber</strong> has been successfully placed!</p>
-            
-            <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
-                <thead>
-                    <tr style='background-color: #faf5eb; color: #d4af37;'>
-                        <th style='padding: 10px; text-align: left;'>Item</th>
-                        <th style='padding: 10px; text-align: center;'>Qty</th>
-                        <th style='padding: 10px; text-align: right;'>Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    $itemRows
-                </tbody>
+            <table style='width:100%;border-collapse:collapse;margin-top:20px;'>
+                <thead><tr style='background:#faf5eb;color:#d4af37;'>
+                    <th style='padding:10px;text-align:left;'>Item</th>
+                    <th style='padding:10px;text-align:center;'>Qty</th>
+                    <th style='padding:10px;text-align:right;'>Price</th>
+                </tr></thead>
+                <tbody>$itemRows</tbody>
             </table>
-
-            <div style='margin-top: 20px; text-align: right; font-size: 14px;'>
-                <p style='margin: 5px 0;'>Delivery Charge: <strong>PKR " . number_format($shippingFee) . "</strong></p>
-                <p style='font-size: 18px; color: #d4af37; font-weight: bold; margin-top: 10px;'>Total Amount: PKR " . number_format($totalAmount) . "</p>
+            <div style='margin-top:20px;text-align:right;font-size:14px;'>
+                <p style='margin:5px 0;'>Delivery Charge: <strong>PKR " . number_format($shippingFee) . "</strong></p>
+                <p style='font-size:18px;color:#d4af37;font-weight:bold;margin-top:10px;'>Total: PKR " . number_format($totalAmount) . "</p>
             </div>
-
-            <div style='margin-top: 30px; padding: 15px; background-color: #faf5eb; border-left: 4px solid #d4af37;'>
-                <p style='margin: 0; font-size: 13px; color: #555;'>
-                    <strong>Payment Method:</strong> Cash on Delivery (COD)<br>
-                    <strong>Studio Phone / WhatsApp:</strong> 0332 0409268<br>
+            <div style='margin-top:30px;padding:15px;background:#faf5eb;border-left:4px solid #d4af37;'>
+                <p style='margin:0;font-size:13px;color:#555;'>
+                    <strong>Payment:</strong> Cash on Delivery (COD)<br>
+                    <strong>WhatsApp:</strong> 0332 0409268<br>
                     <strong>Email:</strong> Senkajewellers@gmail.com
                 </p>
             </div>
         </div>
-    </body>
-    </html>
-    ";
+    </body></html>";
 
-    try {
-        $socket = @fsockopen("tls://" . SMTP_HOST, 465, $errno, $errstr, 8);
-        if (!$socket) {
-            $socket = @fsockopen(SMTP_HOST, SMTP_PORT, $errno, $errstr, 8);
-        }
-        if ($socket) {
-            fgets($socket, 512);
-            fputs($socket, "EHLO " . SMTP_HOST . "\r\n");
-            fgets($socket, 512);
-            fputs($socket, "AUTH LOGIN\r\n");
-            fgets($socket, 512);
-            fputs($socket, base64_encode(SMTP_EMAIL) . "\r\n");
-            fgets($socket, 512);
-            fputs($socket, base64_encode(str_replace(' ', '', SMTP_PASSWORD)) . "\r\n");
-            fgets($socket, 512);
-            fputs($socket, "MAIL FROM: <" . SMTP_EMAIL . ">\r\n");
-            fgets($socket, 512);
-            fputs($socket, "RCPT TO: <" . $toEmail . ">\r\n");
-            fgets($socket, 512);
-            fputs($socket, "DATA\r\n");
-            fgets($socket, 512);
+    // ── Try SSL on port 465 first (most reliable on shared hosting)
+    $socket = false;
+    $contexts = [
+        ['tls://' . SMTP_HOST, 465],
+        ['ssl://' . SMTP_HOST, 465],
+        [SMTP_HOST, 587],
+    ];
 
-            $msg = "Subject: $subject\r\n";
-            $msg .= "To: $toEmail\r\n";
-            $msg .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
-            $msg .= "MIME-Version: 1.0\r\n";
-            $msg .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
-            $msg .= $body;
+    $ctx = stream_context_create([
+        'ssl' => [
+            'verify_peer'       => false,
+            'verify_peer_name'  => false,
+            'allow_self_signed' => true,
+        ]
+    ]);
 
-            fputs($socket, $msg . "\r\n.\r\n");
-            fgets($socket, 512);
-            fputs($socket, "QUIT\r\n");
-            fclose($socket);
-            return;
-        }
-    } catch (Exception $e) {
-        // Fallback
+    foreach ($contexts as $conn) {
+        $socket = @stream_socket_client(
+            $conn[0] . ':' . $conn[1],
+            $errno, $errstr, 10,
+            STREAM_CLIENT_CONNECT,
+            $ctx
+        );
+        if ($socket) break;
     }
 
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
-    @mail($toEmail, $subject, $body, $headers, "-f" . SMTP_EMAIL);
+    if (!$socket) {
+        // Last resort: native mail()
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
+        return @mail($toEmail, "Senka Atelier - Order $orderNumber", $htmlBody, $headers, "-f" . SMTP_EMAIL);
+    }
+
+    stream_set_timeout($socket, 10);
+
+    // SMTP conversation
+    smtpRead($socket);                                                        // 220 greeting
+    fputs($socket, "EHLO senkafashion.com\r\n");
+    smtpRead($socket);                                                        // 250 multi-line capabilities
+
+    fputs($socket, "AUTH LOGIN\r\n");
+    smtpRead($socket);                                                        // 334 VXNlcm5hbWU6
+    fputs($socket, base64_encode(SMTP_EMAIL) . "\r\n");
+    smtpRead($socket);                                                        // 334 UGFzc3dvcmQ6
+    fputs($socket, base64_encode($smtpPass) . "\r\n");
+    $authResp = smtpRead($socket);                                            // 235 Authenticated
+
+    if (strpos($authResp, '235') === false) {
+        fclose($socket);
+        // Auth failed → fallback to mail()
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
+        return @mail($toEmail, "Senka Atelier - Order $orderNumber", $htmlBody, $headers, "-f" . SMTP_EMAIL);
+    }
+
+    fputs($socket, "MAIL FROM: <" . SMTP_EMAIL . ">\r\n");
+    smtpRead($socket);                                                        // 250 OK
+    fputs($socket, "RCPT TO: <$toEmail>\r\n");
+    smtpRead($socket);                                                        // 250 OK
+    fputs($socket, "DATA\r\n");
+    smtpRead($socket);                                                        // 354 Start input
+
+    $rawEmail  = "Date: " . date('r') . "\r\n";
+    $rawEmail .= "From: Senka Atelier <" . SMTP_EMAIL . ">\r\n";
+    $rawEmail .= "To: $toEmail\r\n";
+    $rawEmail .= "Subject: $subject\r\n";
+    $rawEmail .= "MIME-Version: 1.0\r\n";
+    $rawEmail .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $rawEmail .= "Content-Transfer-Encoding: base64\r\n\r\n";
+    $rawEmail .= chunk_split(base64_encode($htmlBody)) . "\r\n";
+
+    fputs($socket, $rawEmail . ".\r\n");
+    smtpRead($socket);                                                        // 250 Queued
+
+    fputs($socket, "QUIT\r\n");
+    fclose($socket);
+    return true;
 }
+
