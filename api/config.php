@@ -1,10 +1,10 @@
 <?php
 // Senka API Configuration
 
-define('DB_HOST', 'localhost');
+define('DB_HOST', 'sdb-84.hosting.stackcp.net');
 
 
-define('DB_NAME', 'senkafashion_db');
+define('DB_NAME', 'senkafashion_db-353039369991');
 define('DB_USER', 'senkafashion_user');
 define('DB_PASS', 'SenkaDb#2026!');
 

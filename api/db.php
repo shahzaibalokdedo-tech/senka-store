@@ -32,16 +32,24 @@ function getDB() {
 
 
 
+        $credentials = [
+            [DB_USER, DB_PASS],
+            [DB_NAME, DB_PASS]
+        ];
+
         $errors = [];
         foreach ($dsns as $dsn) {
-            try {
-                $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-                initDB($pdo);
-                return $pdo;
-            } catch (PDOException $e) {
-                $errors[] = $dsn . " => " . $e->getMessage();
+            foreach ($credentials as $cred) {
+                try {
+                    $pdo = new PDO($dsn, $cred[0], $cred[1], $options);
+                    initDB($pdo);
+                    return $pdo;
+                } catch (PDOException $e) {
+                    $errors[] = "User: " . $cred[0] . " | " . $dsn . " => " . $e->getMessage();
+                }
             }
         }
+
 
         http_response_code(500);
         echo json_encode([
