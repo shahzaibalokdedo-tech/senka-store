@@ -10,31 +10,41 @@ function getDB() {
             PDO::ATTR_EMULATE_PREPARES => false,
         ];
 
+        $iniSocket = ini_get('mysqli.default_socket') ?: ini_get('pdo_mysql.default_socket');
+
         $dsns = [
             "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/tmp/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/var/lib/mysql/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/var/run/mysqld/mysqld.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=127.0.0.1;port=3306;dbname=" . DB_NAME . ";charset=utf8mb4"
         ];
 
-        $lastException = null;
+        if ($iniSocket) {
+            $dsns[] = "mysql:host=localhost;unix_socket={$iniSocket};dbname=" . DB_NAME . ";charset=utf8mb4";
+        }
+
+        $dsns[] = "mysql:host=localhost;unix_socket=/tmp/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=localhost;unix_socket=/var/lib/mysql/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=localhost;unix_socket=/var/run/mysqld/mysqld.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+
+        $errors = [];
         foreach ($dsns as $dsn) {
             try {
                 $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
                 initDB($pdo);
                 return $pdo;
             } catch (PDOException $e) {
-                $lastException = $e;
+                $errors[] = $dsn . " => " . $e->getMessage();
             }
         }
 
         http_response_code(500);
-        echo json_encode(["error" => "Database Connection Failed: " . $lastException->getMessage()]);
+        echo json_encode([
+            "error" => "Database Connection Failed",
+            "attempts" => $errors
+        ]);
         exit;
     }
     return $pdo;
 }
+
 
 
 function initDB($pdo) {

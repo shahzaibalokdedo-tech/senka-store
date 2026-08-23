@@ -1,7 +1,8 @@
 <?php
 // Senka API Configuration
 
-define('DB_HOST', '127.0.0.1');
+define('DB_HOST', 'localhost');
+
 
 define('DB_NAME', 'senkafashion_db');
 define('DB_USER', 'senkafashion_user');
