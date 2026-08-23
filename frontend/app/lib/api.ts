@@ -32,10 +32,10 @@ export async function fetchProducts(category?: string, search?: string): Promise
     if (category && category !== "All") params.append("category", category);
     if (search) params.append("search", search);
 
-    const res = await fetch(`${API_BASE}/products/?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE}/products?${params.toString()}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch products");
     const data = await res.json();
-    return data.items || [];
+    return Array.isArray(data) ? data : (data.items || []);
   } catch {
     return getFallbackProducts(category, search);
   }
@@ -43,22 +43,22 @@ export async function fetchProducts(category?: string, search?: string): Promise
 
 export async function fetchCategories(): Promise<{ id: number; name: string; slug: string }[]> {
   try {
-    const res = await fetch(`${API_BASE}/products/categories`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE}/categories`, { cache: "no-store" });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    return data.categories || [];
+    return Array.isArray(data) ? data : (data.categories || []);
   } catch {
     return [
       { id: 1, name: "Solitaire Rings", slug: "rings" },
       { id: 2, name: "Necklaces & Pendants", slug: "necklaces" },
-      { id: 3, name: "Kundan & Polki", slug: "kundan-polki" },
-      { id: 4, name: "Oxidised Silver", slug: "oxidised-silver" },
-      { id: 5, name: "Bangles & Cuffs", slug: "bangles" },
-      { id: 6, name: "Earrings & Jhumkas", slug: "earrings" },
-      { id: 7, name: "Bridal Sets", slug: "bridal" },
+      { id: 3, name: "Earrings & Studs", slug: "earrings" },
+      { id: 4, name: "Bangles & Bracelets", slug: "bracelets" },
+      { id: 5, name: "Bridal Sets", slug: "bridal" },
+      { id: 6, name: "Bespoke & Custom", slug: "custom" },
     ];
   }
 }
+
 
 // ─────────────────────────────────────────────
 // Order APIs
