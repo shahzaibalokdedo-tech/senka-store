@@ -9,6 +9,7 @@ import {
   AlertCircle, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { fetchProducts, fetchOrders } from "../lib/api";
+import ImageUploader from "../components/ImageUploader";
 import { isAdmin } from "../lib/auth";
 import Link from "next/link";
 
@@ -394,15 +395,12 @@ export default function AdminPage() {
                         {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
-                    <div style={{ position: "relative" }}>
-                      <Image size={16} color="var(--gold-primary)" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
-                      <input type="url" value={newProdImage} onChange={(e) => setNewProdImage(e.target.value)} placeholder="Image URL (paste from Unsplash, Cloudinary, etc.)" style={{ width: "100%", padding: "11px 11px 11px 36px", background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "var(--radius-sm)" }} />
-                    </div>
-                    {newProdImage && (
-                      <div style={{ width: "100%", height: "120px", borderRadius: "var(--radius-sm)", overflow: "hidden", border: "1px solid var(--gold-line)" }}>
-                        <img src={newProdImage} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      </div>
-                    )}
+                    <ImageUploader
+                      value={newProdImage}
+                      onChange={setNewProdImage}
+                      label="Product Image"
+                      height={180}
+                    />
                     <textarea value={newProdDesc} onChange={(e) => setNewProdDesc(e.target.value)} placeholder="Short description (optional)" rows={2} style={{ width: "100%", padding: "11px", background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "var(--radius-sm)", resize: "vertical" }} />
                     <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
                       <button type="submit" className="btn-gold-primary" style={{ flex: 1, padding: "13px" }}>Publish to Catalog</button>
@@ -450,7 +448,12 @@ export default function AdminPage() {
                   <h2 className="font-serif gold-gradient-text" style={{ fontSize: "1.8rem", margin: "0 0 20px" }}>New Category</h2>
                   <form onSubmit={handleAddCat} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                     <input required type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Category Name *" style={{ width: "100%", padding: "11px", background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "var(--radius-sm)" }} />
-                    <input type="url" value={newCatImage} onChange={(e) => setNewCatImage(e.target.value)} placeholder="Category Image URL (optional)" style={{ width: "100%", padding: "11px", background: "rgba(7,7,9,0.8)", border: "1px solid var(--gold-line)", borderRadius: "var(--radius-sm)" }} />
+                    <ImageUploader
+                      value={newCatImage}
+                      onChange={setNewCatImage}
+                      label="Category Image (optional)"
+                      height={140}
+                    />
                     <div style={{ display: "flex", gap: "10px" }}>
                       <button type="submit" className="btn-gold-primary" style={{ flex: 1, padding: "13px" }}>Create Category</button>
                       <button type="button" onClick={() => setShowAddCat(false)} className="btn-gold-outline" style={{ padding: "13px" }}>Cancel</button>

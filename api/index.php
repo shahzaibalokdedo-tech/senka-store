@@ -37,6 +37,72 @@ if ($uri === '/api/health' || $uri === '/api') {
 }
 
 // ─────────────────────────────────────────────
+// 1b. IMAGE UPLOAD (POST /api/upload)
+// ─────────────────────────────────────────────
+if ($uri === '/api/upload') {
+    if ($method === 'POST') {
+        $uploadDir = dirname(__DIR__) . '/uploads/';
+        $publicUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
+                   . '://' . $_SERVER['HTTP_HOST'] . '/uploads/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if (empty($_FILES['file'])) {
+            http_response_code(400);
+            echo json_encode(["detail" => "No file received"]);
+            exit;
+        }
+
+        $file = $_FILES['file'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime, $allowedTypes)) {
+            http_response_code(400);
+            echo json_encode(["detail" => "Only JPG, PNG, WEBP, and GIF images are allowed"]);
+            exit;
+        }
+
+        $maxSize = 8 * 1024 * 1024; // 8 MB
+        if ($file['size'] > $maxSize) {
+            http_response_code(400);
+            echo json_encode(["detail" => "Image must be under 8 MB"]);
+            exit;
+        }
+
+        $ext = match ($mime) {
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+            default      => 'jpg',
+        };
+
+        $filename = 'senka-' . uniqid() . '.' . $ext;
+        $dest = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            http_response_code(500);
+            echo json_encode(["detail" => "Failed to save file — check uploads/ folder permissions (755)"]);
+            exit;
+        }
+
+        chmod($dest, 0644);
+
+        echo json_encode([
+            "url"      => $publicUrl . $filename,
+            "filename" => $filename,
+            "message"  => "Image uploaded successfully"
+        ], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}
+
+// ─────────────────────────────────────────────
 // 2. CATEGORIES (GET, POST)
 // ─────────────────────────────────────────────
 if ($uri === '/api/categories') {

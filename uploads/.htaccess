@@ -1,0 +1,5 @@
+# Allow direct access to uploaded images
+Options -Indexes
+<FilesMatch "\.(php|phtml|php3|php4|php5|cgi|pl|py|rb)$">
+    Deny from all
+</FilesMatch>
