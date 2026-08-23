@@ -12,16 +12,24 @@ function getDB() {
 
         $iniSocket = ini_get('mysqli.default_socket') ?: ini_get('pdo_mysql.default_socket');
 
+        $envHost = isset($_SERVER['MYSQL_HOST']) ? $_SERVER['MYSQL_HOST'] : (getenv('MYSQL_HOST') ?: null);
+
         $dsns = [
             "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=mysql.stackcp.com;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=db.stackcp.com;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=mysql.findwithus.co.tz;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=127.0.0.1;port=3306;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/tmp/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/var/lib/mysql/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4",
-            "mysql:host=localhost;unix_socket=/var/run/mysqld/mysqld.sock;dbname=" . DB_NAME . ";charset=utf8mb4"
         ];
+
+        if ($envHost) {
+            $dsns[] = "mysql:host={$envHost};dbname=" . DB_NAME . ";charset=utf8mb4";
+        }
+
+        $dsns[] = "mysql:host=mysql.stackcp.com;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=db.stackcp.com;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=mysql.findwithus.co.tz;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=127.0.0.1;port=3306;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=localhost;unix_socket=/tmp/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=localhost;unix_socket=/var/lib/mysql/mysql.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+        $dsns[] = "mysql:host=localhost;unix_socket=/var/run/mysqld/mysqld.sock;dbname=" . DB_NAME . ";charset=utf8mb4";
+
 
 
         $errors = [];
