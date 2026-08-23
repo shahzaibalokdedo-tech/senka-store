@@ -1,0 +1,41 @@
+﻿.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(215,177,93,0.32);
+  border-radius: 18px;
+  padding: 30px;
+}
+
+.auth-card h1 {
+  margin-top: 0;
+  color: #f7e3a5;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #f7e3a5;
+}
+
+.auth-card input {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(215,177,93,0.4);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: white;
+}
